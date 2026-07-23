@@ -1,0 +1,302 @@
+@inject MainViewModel Vm
+@inject IJSRuntime JS
+@implements IDisposable
+
+<div class="app">
+
+    @* ===== header ===== *@
+    <div class="header card">
+        <div class="title-area">
+            <span class="app-title">DiskPart UI</span>
+            <span class="subtitle">A visual front-end for the Windows diskpart tool — build a script, review it, run it.</span>
+        </div>
+        <div class="toolbar">
+            @if (Vm.IsElevated)
+            {
+                <span class="badge admin">● Administrator</span>
+            }
+            else
+            {
+                <span class="badge notadmin">● Not elevated</span>
+            }
+            @if (Vm.IsBusy)
+            {
+                <span class="spinner"></span>
+            }
+            <span class="status">@Vm.StatusText</span>
+            <button class="btn icon-btn" title="Refresh" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.RefreshAllCommand)">⟳</button>
+            <button class="btn about-btn" @onclick="() => _aboutOpen = true"><span class="ic-about">ⓘ</span> About</button>
+        </div>
+    </div>
+
+    @* ===== body ===== *@
+    <div class="body">
+
+        @* --- left column: the tables --- *@
+        <div class="col col-left" data-splitkey="leftcol">
+
+            <div class="panel card p-disks" data-splitkey="disks">
+                <div class="panel-title">Disks</div>
+                <div class="list">
+                    @if (Vm.Disks.Count == 0)
+                    {
+                        <div class="empty">No disks found — click Refresh.</div>
+                    }
+                    @foreach (var disk in Vm.Disks)
+                    {
+                        <div class="row @(Vm.SelectedDisk == disk ? "selected" : "")" @onclick="() => Vm.SelectedDisk = disk">
+                            <span class="icon">💽</span>
+                            <div class="info">
+                                <div class="caption">@disk.Caption</div>
+                                <div class="summary">@disk.Summary</div>
+                            </div>
+                            <button class="btn item-actions" @onclick:stopPropagation="true" @onclick="() => Vm.ShowDiskActionsCommand.Execute(disk)"><span class="ic-wrench">🔧</span> Actions</button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="h-split"></div>
+
+            <div class="panel card p-partitions" data-splitkey="partitions">
+                <div class="panel-title">Partitions (selected disk)</div>
+                <div class="list">
+                    @if (Vm.Partitions.Count == 0)
+                    {
+                        <div class="empty">Select a disk to list its partitions.</div>
+                    }
+                    @foreach (var partition in Vm.Partitions)
+                    {
+                        <div class="row @(Vm.SelectedPartition == partition ? "selected" : "")" @onclick="() => Vm.SelectedPartition = partition">
+                            <span class="icon">🧩</span>
+                            <div class="info">
+                                <div class="caption">@partition.Caption</div>
+                                <div class="summary">@partition.Summary</div>
+                            </div>
+                            <button class="btn item-actions" @onclick:stopPropagation="true" @onclick="() => Vm.ShowPartitionActionsCommand.Execute(partition)"><span class="ic-wrench">🔧</span> Actions</button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="h-split"></div>
+
+            <div class="panel card p-fill">
+                <div class="panel-title">Volumes</div>
+                <div class="list">
+                    @if (Vm.Volumes.Count == 0)
+                    {
+                        <div class="empty">No volumes found — click Refresh.</div>
+                    }
+                    @foreach (var volume in Vm.Volumes)
+                    {
+                        <div class="row @(Vm.SelectedVolume == volume ? "selected" : "")" @onclick="() => Vm.SelectedVolume = volume">
+                            <span class="icon">💾</span>
+                            <div class="info">
+                                <div class="caption">@volume.Caption</div>
+                                <div class="summary">@volume.Summary</div>
+                            </div>
+                            <button class="btn item-actions" @onclick:stopPropagation="true" @onclick="() => Vm.ShowVolumeActionsCommand.Execute(volume)"><span class="ic-wrench">🔧</span> Actions</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="v-split"></div>
+
+        @* --- right column: actions / command / output --- *@
+        <div class="col col-right">
+
+            <div class="panel card p-actions" data-splitkey="actions">
+                <div class="panel-title">Actions</div>
+                <div class="actions">
+                    <div class="section-label">INFORMATION (runs immediately)</div>
+                    <div class="btn-row">
+                        <button class="btn info" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.DetailDiskCommand)">Detail disk</button>
+                        <button class="btn info" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.ListPartitionsCommand)">List partitions</button>
+                        <button class="btn info" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.DetailVolumeCommand)">Detail volume</button>
+                    </div>
+
+                    <div class="divider"></div>
+                    <div class="section-label">SELECTED DISK</div>
+                    <div class="btn-row">
+                        <button class="btn danger" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendCleanCommand)">Clean</button>
+                        <button class="btn danger" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendCleanAllCommand)">Clean all</button>
+                        <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendConvertGptCommand)">Convert GPT</button>
+                        <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendConvertMbrCommand)">Convert MBR</button>
+                        <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendCreatePrimaryCommand)">Create primary</button>
+                        <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendOnlineCommand)">Online</button>
+                        <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendOfflineCommand)">Offline</button>
+                    </div>
+
+                    <div class="divider"></div>
+                    <div class="section-label">SELECTED VOLUME</div>
+                    <div class="btn-row">
+                        <button class="btn danger" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendFormatCommand)">Format</button>
+                        <button class="btn danger" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendDeleteVolumeCommand)">Delete volume</button>
+                        <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendAssignLetterCommand)">Assign letter</button>
+                        <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendRemoveLetterCommand)">Remove letter</button>
+                        <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendExtendCommand)">Extend</button>
+                        <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendShrinkCommand)">Shrink</button>
+                    </div>
+
+                    <div class="divider"></div>
+                    <div class="section-label">SELECTED PARTITION</div>
+                    <div class="btn-row">
+                        <button class="btn danger" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendDeletePartitionCommand)">Delete partition</button>
+                        <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendSetActiveCommand)">Set active</button>
+                        <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.AppendSetInactiveCommand)">Set inactive</button>
+                    </div>
+
+                    <div class="divider"></div>
+                    <div class="section-label">WIZARDS</div>
+                    <div class="btn-row">
+                        <button class="btn danger" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.MakeBootableUsbCommand)">Bootable USB…</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-split"></div>
+
+            <div class="panel card p-command" data-splitkey="command">
+                <div class="panel-head">
+                    <div class="panel-title">Command preview</div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn" @onclick="() => Run(Vm.OpenScriptCommand)">📂 Open…</button>
+                        <button class="btn" @onclick="() => Run(Vm.SaveScriptCommand)">💾 Save…</button>
+                    </div>
+                </div>
+                <textarea class="editor" @bind="Vm.CommandScript" @bind:event="oninput"
+                          placeholder="Add actions above, or type diskpart commands here (one per line)…"></textarea>
+                <div class="cmd-buttons">
+                    <button class="btn run" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.RunScriptCommand)">▶ Run script</button>
+                    <button class="btn" disabled="@Vm.IsBusy" @onclick="() => Vm.ClearScriptCommand.Execute(null)"><span class="ic-trash">🗑</span> Clear</button>
+                </div>
+            </div>
+
+            <div class="h-split"></div>
+
+            <div class="panel card p-fill">
+                <div class="panel-head">
+                    <div class="panel-title">Output</div>
+                    <button class="btn" @onclick="() => Vm.ClearOutputCommand.Execute(null)"><span class="ic-trash">🗑</span> Clear</button>
+                </div>
+                <pre class="output">@Vm.OutputLog</pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===== per-item action popup ===== *@
+@if (Vm.IsActionMenuOpen)
+{
+    <div class="overlay" @onclick="() => Vm.CloseActionMenuCommand.Execute(null)">
+        <div class="menu-card" @onclick:stopPropagation="true">
+            <div class="menu-title">@Vm.MenuTitle</div>
+            <div class="menu-list">
+                @foreach (var action in Vm.MenuActions)
+                {
+                    <button class="btn @CategoryClass(action.Category)" @onclick="() => Invoke(action)">@action.Label</button>
+                }
+            </div>
+            <button class="btn" @onclick="() => Vm.CloseActionMenuCommand.Execute(null)">Cancel</button>
+        </div>
+    </div>
+}
+
+@* ===== about ===== *@
+@if (_aboutOpen)
+{
+    <div class="overlay" @onclick="() => _aboutOpen = false">
+        <div class="menu-card about-card" @onclick:stopPropagation="true">
+            <div class="about-head">
+                <span class="about-logo">🖥</span>
+                <div>
+                    <div class="about-name">DiskPart UI</div>
+                    <div class="about-ver">Version 1.0</div>
+                    <div class="about-author">Made by The EECS Blog</div>
+                </div>
+            </div>
+            <div class="about-body">
+                <p>A friendly graphical front-end for the Windows <code>diskpart</code> tool — inspect and manage disks, partitions, and volumes without memorizing commands.</p>
+                <p>Every operation becomes visible <code>diskpart</code> commands you review before running. Read-only queries run immediately; anything that changes a disk is queued into an editable script and executed only after you confirm.</p>
+                <p class="about-tech">Built with .NET MAUI Blazor Hybrid · CliWrap · CommunityToolkit.Mvvm</p>
+                <p class="about-links">
+                    <a href="#" @onclick:preventDefault="true" @onclick='() => OpenUrl("https://eecs.blog/diskpart-ui-app/")'>📝 Blog post</a>
+                    <a href="#" @onclick:preventDefault="true" @onclick='() => OpenUrl("https://github.com/EECSB/DiskPartUI")'>🐙 GitHub</a>
+                </p>
+                <p class="about-warn">⚠ diskpart operates on raw disks. <b>clean</b>, <b>delete</b>, and <b>format</b> permanently erase data — there is no undo. Always confirm the selected disk. Use at your own risk.</p>
+            </div>
+            <button class="btn" @onclick="() => _aboutOpen = false">Close</button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _aboutOpen;
+
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnViewModelChanged;
+        Vm.Disks.CollectionChanged += OnCollectionChanged;
+        Vm.Volumes.CollectionChanged += OnCollectionChanged;
+        Vm.Partitions.CollectionChanged += OnCollectionChanged;
+        Vm.MenuActions.CollectionChanged += OnCollectionChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        await JS.InvokeVoidAsync("splitter.init");
+
+        if (Vm.RefreshAllCommand.CanExecute(null))
+            await Vm.RefreshAllCommand.ExecuteAsync(null);
+    }
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Run(IAsyncRelayCommand command)
+    {
+        await command.ExecuteAsync(null);
+    }
+
+    private async Task Invoke(MenuAction action)
+    {
+        await Vm.InvokeMenuActionCommand.ExecuteAsync(action);
+    }
+
+    private async Task OpenUrl(string url)
+    {
+        await Launcher.Default.OpenAsync(url);
+    }
+
+    private string CategoryClass(string category)
+    {
+        if (category == "Info")
+            return "info";
+        else if (category == "Danger")
+            return "danger";
+        else
+            return "";
+    }
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnViewModelChanged;
+        Vm.Disks.CollectionChanged -= OnCollectionChanged;
+        Vm.Volumes.CollectionChanged -= OnCollectionChanged;
+        Vm.Partitions.CollectionChanged -= OnCollectionChanged;
+        Vm.MenuActions.CollectionChanged -= OnCollectionChanged;
+    }
+}

@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/DiskPartUI.Tests.csproj" />
+  </Folder>
+  <Project Path="DiskPartUI.csproj" />
+</Solution>
