@@ -57,6 +57,12 @@ Dependencies: **CliWrap** (process execution), **CommunityToolkit.Mvvm** (`Obser
 
 ## Runtime & bootstrap
 
+- **`Platforms/Windows/App.xaml.cs`** is the first authored code that runs. Before anything else
+  it points the environment variable `WEBVIEW2_USER_DATA_FOLDER` at
+  `%LOCALAPPDATA%\DiskPartUI\WebView2`. **Do not remove this.** WebView2 otherwise defaults its
+  user-data folder to the directory holding the executable; once the app is installed under
+  Program Files that folder is read-only, and the WebView fails on launch with *"We couldn't
+  create the data directory"*. It has to happen in the constructor, before any WebView exists.
 - **`MauiProgram.CreateMauiApp`** calls `AddMauiBlazorWebView()` (plus
   `AddBlazorWebViewDeveloperTools()` in Debug) and registers the services and view-model in the
   DI container: `DiskPartService`, `DiskPartParser`, `IDialogService`, `IFileDialogService`, and
@@ -255,14 +261,22 @@ The installer is an [Inno Setup](https://jrsoftware.org/isinfo.php) script,
 "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\DiskPartUI.iss
 ```
 
+(`winget install JRSoftware.InnoSetup` puts `ISCC.exe` under
+`%LOCALAPPDATA%\Programs\Inno Setup 6\` instead — adjust the path to match your install.)
+
 MSIX is deliberately not used: a packaged app cannot request `requireAdministrator`, which
 `diskpart` needs. The installer therefore sets `PrivilegesRequired=admin` and installs
 per-machine into Program Files.
 
-[`installer/Test-Installer.ps1`](installer/Test-Installer.ps1) smoke-tests the result end to end
-— it silently installs, asserts the app files, the self-contained runtime, the Start Menu
-shortcut, the uninstaller and the Programs-and-Features entry all exist, then silently
-uninstalls and confirms the cleanup. It needs an **elevated** shell:
+[`installer/Test-Installer.ps1`](installer/Test-Installer.ps1) smoke-tests the result end to end.
+It silently installs; asserts the app files, the self-contained runtime, the Start Menu shortcut,
+the uninstaller and the Programs-and-Features entry all exist; **launches the installed app** and
+checks that it stays running, that WebView2 wrote its data under LocalAppData, and that nothing
+was written beside the executable; then silently uninstalls and confirms the cleanup.
+
+That launch step matters: v1.0.0 shipped an installer whose app could not start at all, because
+the original test only exercised install and uninstall. Installing without running proves very
+little. The script needs an **elevated** shell:
 
 ```bash
 powershell -ExecutionPolicy Bypass -File installer\Test-Installer.ps1

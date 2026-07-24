@@ -6,6 +6,9 @@
 ;
 ; Then compile this script:
 ;   "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\DiskPartUI.iss
+; (a winget install puts ISCC.exe under %LOCALAPPDATA%\Programs\Inno Setup 6\ instead)
+;
+; Verify the result with installer\Test-Installer.ps1 from an elevated shell.
 ;
 ; Output: bin\DiskPartUI-v<version>-setup.exe
 
