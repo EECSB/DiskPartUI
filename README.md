@@ -30,6 +30,7 @@ following the pattern from <https://eecs.blog/calling-the-command-line-in-c-with
 - [Requirements](#requirements)
 - [Running locally](#running-locally)
 - [Administrator rights](#administrator-rights)
+- [Security warning on first launch](#security-warning-on-first-launch)
 - [How it works](#how-it-works)
 - [Project layout](#project-layout)
 - [Testing](#testing)
@@ -140,6 +141,46 @@ in [`Platforms/Windows/app.manifest`](Platforms/Windows/app.manifest). Launching
 > Debugging in Visual Studio: because the app requests admin rights, VS prompts you to
 > **restart as Administrator** the first time you press F5. That is expected — VS must itself
 > be elevated to debug an elevated process.
+
+## Security warning on first launch
+
+The released builds are **not code-signed**, so Windows shows an "unknown publisher" warning
+the first time you download or run them. This is expected for an unsigned app — it is a
+reputation check, not a sign that anything is wrong with the download.
+
+You may see it in up to three places:
+
+- **When downloading** — the browser (SmartScreen) flags the file as not commonly downloaded.
+  Choose **Keep** / **Keep anyway**.
+- **When launching** — a blue *"Windows protected your PC"* dialog appears. Click
+  **More info**, then **Run anyway**.
+- **At the UAC prompt** — because the app runs elevated, the prompt shows **Publisher:
+  Unknown**. That is the same missing signature; choose **Yes** to continue.
+
+### Verify what you downloaded
+
+Every release lists a **SHA-256 digest** next to each asset on the
+[Releases](https://github.com/EECSB/DiskPartUI/releases) page. Confirm your copy matches before
+running it:
+
+```powershell
+Get-FileHash .\DiskPartUI-v1.0.0-setup.exe -Algorithm SHA256
+```
+
+If the hash matches the one on the release, the file is byte-for-byte the published build.
+
+### Clear the warning for a downloaded file
+
+Windows tags files from the internet with a "mark of the web" that triggers the launch prompt.
+Once you have verified the download, you can remove that tag so it does not warn again — either
+via **Right-click → Properties → Unblock**, or:
+
+```powershell
+Unblock-File .\DiskPartUI-v1.0.0-setup.exe
+```
+
+> The proper long-term fix is an Authenticode code-signing certificate, which would remove these
+> warnings entirely. Until the builds are signed, the steps above are the way through.
 
 ## How it works
 
