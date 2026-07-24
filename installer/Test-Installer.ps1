@@ -103,6 +103,40 @@ if ($arp)
     Write-Host ("       {0} / {1} / {2}" -f $entry.DisplayName, $entry.DisplayVersion, $entry.Publisher)
 }
 
+Write-Host 'Launching the installed app:'
+if (Test-Path $exe)
+{
+    #WebView2 must not put its data folder next to the exe: under Program Files that is
+    #read-only and the app dies with "We couldn't create the data directory".
+    $webViewData = Join-Path $env:LOCALAPPDATA 'DiskPartUI\WebView2'
+    $strayData = Join-Path $app 'DiskPartUI.exe.WebView2'
+    #Clear both locations first so the checks below reflect only this launch. A stray folder
+    #beside the exe survives uninstall (the installer never created it), and would otherwise
+    #fail the check forever after one bad build.
+    foreach ($stale in @($webViewData, $strayData))
+    {
+        if (Test-Path $stale)
+        {
+            Remove-Item $stale -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    $app_proc = Start-Process $exe -PassThru
+    #Give the WebView time to initialize before inspecting where it wrote its data.
+    $deadline = (Get-Date).AddSeconds(30)
+    while ((-not (Test-Path $webViewData)) -and (Get-Date) -lt $deadline -and -not $app_proc.HasExited)
+    {
+        Start-Sleep -Milliseconds 500
+    }
+
+    Check 'process still running' (-not $app_proc.HasExited)
+    Check 'WebView2 data folder created under LocalAppData' (Test-Path $webViewData)
+    Check 'no WebView2 folder written beside the exe' (-not (Test-Path $strayData))
+
+    try { $app_proc | Stop-Process -Force -ErrorAction Stop } catch {}
+    Start-Sleep -Milliseconds 1500
+}
+
 Write-Host 'Uninstalling ...'
 if (Test-Path $uninstaller)
 {

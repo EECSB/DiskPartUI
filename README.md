@@ -164,7 +164,7 @@ Every release lists a **SHA-256 digest** next to each asset on the
 running it:
 
 ```powershell
-Get-FileHash .\DiskPartUI-v1.0.0-setup.exe -Algorithm SHA256
+Get-FileHash .\DiskPartUI-*-setup.exe -Algorithm SHA256
 ```
 
 If the hash matches the one on the release, the file is byte-for-byte the published build.
@@ -176,7 +176,7 @@ Once you have verified the download, you can remove that tag so it does not warn
 via **Right-click → Properties → Unblock**, or:
 
 ```powershell
-Unblock-File .\DiskPartUI-v1.0.0-setup.exe
+Unblock-File .\DiskPartUI-*-setup.exe
 ```
 
 > The proper long-term fix is an Authenticode code-signing certificate, which would remove these

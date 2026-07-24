@@ -10,7 +10,7 @@
 ; Output: bin\DiskPartUI-v<version>-setup.exe
 
 #define AppName      "DiskPart UI"
-#define AppVersion   "1.0.0"
+#define AppVersion   "1.0.1"
 #define AppPublisher "The EECS Blog"
 #define AppURL       "https://github.com/EECSB/DiskPartUI"
 #define AppExe       "DiskPartUI.exe"
