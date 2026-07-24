@@ -109,10 +109,11 @@ assign` sequence for a bootable drive, behind a strong confirmation.
 
 ## Running locally
 
-**Just want to run it?** Download the latest build from the
-[**Releases**](https://github.com/EECSB/DiskPartUI/releases/latest) page, unzip it anywhere,
-and run `DiskPartUI.exe` — it asks for administrator rights on launch. The published build is
-framework-dependent, so it needs the .NET 10 runtime and the Windows App SDK runtime installed.
+**Just want to run it?** Grab the latest build from the
+[**Releases**](https://github.com/EECSB/DiskPartUI/releases/latest) page — either the
+`-setup.exe` installer or the portable `-win-x64.zip` (unzip anywhere and run
+`DiskPartUI.exe`). Both are self-contained, so no .NET runtime or Windows App SDK install is
+needed; the app asks for administrator rights on launch.
 
 To build it yourself — from Visual Studio: open `DiskPartUI.slnx`, select the
 **Windows Machine** target, press F5.
