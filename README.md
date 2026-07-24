@@ -258,5 +258,8 @@ not by unit tests.
 
 ## License
 
+Released into the public domain under [The Unlicense](LICENSE) — do whatever you want with it,
+commercial or not, no attribution required.
+
 Provided as-is, without warranty, as a personal/developer tool. You are responsible for what
 you run against your disks.
