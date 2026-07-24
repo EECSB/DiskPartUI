@@ -12,10 +12,11 @@ user-facing overview see [README.md](README.md).
 - [Domain models](#domain-models)
 - [The view-model](#the-view-model)
 - [Dialogs & file pickers](#dialogs--file-pickers)
-- [The view (MainPage)](#the-view-mainpage)
+- [The view (Blazor UI)](#the-view-blazor-ui)
 - [Elevation & the manifest](#elevation--the-manifest)
 - [Testing](#testing)
 - [Build & run](#build--run)
+- [Packaging the release](#packaging-the-release)
 
 ## Overview
 
@@ -84,9 +85,9 @@ Dependencies: **CliWrap** (process execution), **CommunityToolkit.Mvvm** (`Obser
   than thrown.
 - **Serialization.** A `SemaphoreSlim(1, 1)` guards execution so two `diskpart` instances never
   run concurrently.
-- **Result.** Returns a `DiskPartResult(bool Success, string Output, string Script)`. The temp
-  file is deleted best-effort in a `finally`.
-- `RunCommandsAsync(ct, params string[])` is a convenience overload that joins commands into a
+- **Result.** Returns a `DiskPartResult(bool Success, string Output)`. The temp file is deleted
+  best-effort in a `finally`.
+- `RunCommandsAsync(params string[])` is a convenience overload that joins commands into a
   script.
 
 ## Output parsing
@@ -123,7 +124,7 @@ Plain immutable objects in `Models/` (`init`-only properties):
 - **`VolumeInfo`** — number, letter, label, file system, type, size, status, info + `Caption`
   / `Summary`.
 - **`PartitionInfo`** — number, type, size, offset + `Caption` / `Summary`.
-- **`DiskPartResult`** — the record returned by `DiskPartService`.
+- **`DiskPartResult`** — the record returned by `DiskPartService` (`Success` + `Output`).
 - **`MenuAction`** — one entry in a per-item popup: `Label`, `Category` (`Info` / `Normal` /
   `Danger`, which drives the button color), and a `Func<Task> Run`.
 
@@ -131,10 +132,9 @@ Plain immutable objects in `Models/` (`init`-only properties):
 
 `ViewModels/MainViewModel.cs` (a `partial ObservableObject`) holds all state and commands.
 
-- **State.** Observable collections (`Disks`, `Volumes`, `Partitions`, `MenuActions`),
+- **State.** Observable collections (`Disks`, `Volumes`, `Partitions`, `MenuActions`) and
   observable properties (`SelectedDisk/Volume/Partition`, `CommandScript`, `OutputLog`,
-  `StatusText`, `IsBusy`, `IsElevated`, `IsActionMenuOpen`, `MenuTitle`, …), and computed
-  `IsNotBusy` / `IsNotElevated`.
+  `StatusText`, `IsBusy`, `IsElevated`, `IsActionMenuOpen`, `MenuTitle`, …).
 - **Two kinds of command.** *Read-only* commands (`RefreshAll`, `DetailDisk`,
   `ListPartitions`, `DetailVolume`) run `diskpart` immediately and show the output.
   *Builder* commands (`AppendClean`, `AppendFormat`, `AppendDeleteVolume`, …) only append the
@@ -213,8 +213,10 @@ Covered:
 
 - **`DiskPartParser`** — parsing real `list disk` / `list volume` / `list partition` output,
   including the tricky cases: empty drive-letter cells, a multi-word `No Media` status, `0 B`
-  values, GPT-vs-MBR detection, and empty / no-table input.
-- **Model formatting** — the `Caption` / `Summary` / `PartitionStyle` computed strings.
+  values, GPT-vs-MBR detection, CRLF as well as LF line endings, rows whose id is not numeric,
+  and empty / no-table input.
+- **Model formatting** — the `Caption` / `Summary` / `PartitionStyle` computed strings,
+  including the omit-when-empty branches (zero free space, missing offset, no fields set).
 
 ```bash
 dotnet test
@@ -235,3 +237,33 @@ dotnet run -c Debug -f net10.0-windows10.0.19041.0
 
 The project multi-targets nothing else — it is Windows-only because `diskpart` is. See
 [README.md](README.md#running-locally) for the Visual Studio path and the admin-debugging note.
+
+## Packaging the release
+
+Release builds are published **self-contained** so the download needs no .NET or Windows App SDK
+runtime installed:
+
+```bash
+dotnet publish DiskPartUI.csproj -c Release -f net10.0-windows10.0.19041.0 -r win-x64 --self-contained true -p:WindowsAppSDKSelfContained=true
+```
+
+The installer is an [Inno Setup](https://jrsoftware.org/isinfo.php) script,
+[`installer/DiskPartUI.iss`](installer/DiskPartUI.iss), which packs that publish folder into
+`bin\DiskPartUI-v<version>-setup.exe`:
+
+```bash
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\DiskPartUI.iss
+```
+
+MSIX is deliberately not used: a packaged app cannot request `requireAdministrator`, which
+`diskpart` needs. The installer therefore sets `PrivilegesRequired=admin` and installs
+per-machine into Program Files.
+
+[`installer/Test-Installer.ps1`](installer/Test-Installer.ps1) smoke-tests the result end to end
+— it silently installs, asserts the app files, the self-contained runtime, the Start Menu
+shortcut, the uninstaller and the Programs-and-Features entry all exist, then silently
+uninstalls and confirms the cleanup. It needs an **elevated** shell:
+
+```bash
+powershell -ExecutionPolicy Bypass -File installer\Test-Installer.ps1
+```

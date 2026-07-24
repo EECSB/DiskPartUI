@@ -118,6 +118,19 @@ public class DiskPartParserTests
         Assert.Equal("Recovery", volume.Label);
     }
 
+    [Fact]
+    public void ParseVolumes_reads_an_empty_drive_with_no_media()
+    {
+        var volume = _parser.ParseVolumes(ListVolumeOutput)[2];
+
+        Assert.Equal("D", volume.Letter);
+        Assert.Equal("", volume.Label);
+        Assert.Equal("", volume.FileSystem);
+        Assert.Equal("Removable", volume.Type);
+        Assert.Equal("0 B", volume.Size);
+        Assert.Equal("No Media", volume.Status);
+    }
+
     //-------------------------------------------------------------- partitions
 
     [Fact]
@@ -151,5 +164,36 @@ public class DiskPartParserTests
     {
         var partitions = _parser.ParsePartitions("There are no partitions on this disk to show.");
         Assert.Empty(partitions);
+    }
+
+    [Fact]
+    public void ParseDisks_handles_crlf_line_endings()
+    {
+        //diskpart emits CRLF; the raw string literals above use LF, so cover both.
+        var disks = _parser.ParseDisks(ListDiskOutput.Replace("\n", "\r\n"));
+
+        Assert.Equal(3, disks.Count);
+        Assert.Equal("Online", disks[0].Status);
+        Assert.Equal("476 GB", disks[0].Size);
+    }
+
+    [Fact]
+    public void ParseDisks_skips_rows_without_a_number()
+    {
+        //A separator followed by a row whose first column has no digits is not a disk.
+        var output =
+            """
+
+              Disk ###  Status         Size     Free     Dyn  Gpt
+              --------  -------------  -------  -------  ---  ---
+              Disk one  Online          476 GB      0 B
+              Disk 1    Online          931 GB      0 B
+
+            """;
+
+        var disks = _parser.ParseDisks(output);
+
+        Assert.Single(disks);
+        Assert.Equal(1, disks[0].Number);
     }
 }

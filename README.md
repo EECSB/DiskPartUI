@@ -17,10 +17,10 @@ line can wipe the wrong disk. **DiskPart UI** wraps it in a .NET MAUI desktop ap
 your disks/volumes/partitions, lets you assemble operations by clicking, shows you the exact
 script it will run, and only touches the disk after you confirm.
 
-The command line itself is invoked with [CliWrap](https://github.com/Tyrrrz/CliWrap),
-following the pattern from <https://eecs.blog/calling-the-command-line-in-c-with-cliwrap/>.
 
-📝 Write-up: <https://eecs.blog/diskpart-ui-app/> · Made by [The EECS Blog](https://eecs.blog)
+📝 I used [CliWrap](https://github.com/Tyrrrz/CliWrap) to call the command line. I already made a blog post about that [here](https://eecs.blog/calling-the-command-line-in-c-with-cliwrap/) if you are interested.
+
+📝 Blog post about DiskPart UI app: <https://eecs.blog/diskpart-ui-app/>
 
 ## Table of contents
 
@@ -227,6 +227,7 @@ DiskPartUI/
   ViewModels/MainViewModel.cs   # app logic and commands (CommunityToolkit.Mvvm)
   Platforms/Windows/            # app.manifest (requireAdministrator), Package.appxmanifest
   Resources/                    # fonts, icons, splash
+  installer/                    # Inno Setup script + installer smoke test
   tests/                        # xUnit tests (net10.0), linking the pure-logic sources
 DOCUMENTATION.md                # developer documentation
 README.md

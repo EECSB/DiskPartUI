@@ -25,7 +25,7 @@
             }
             <span class="status">@Vm.StatusText</span>
             <button class="btn icon-btn" title="Refresh" disabled="@Vm.IsBusy" @onclick="() => Run(Vm.RefreshAllCommand)">⟳</button>
-            <button class="btn about-btn" @onclick="() => _aboutOpen = true"><span class="ic-about">ⓘ</span> About</button>
+            <button class="btn" @onclick="() => _aboutOpen = true"><span class="ic-about">ⓘ</span> About</button>
         </div>
     </div>
 
@@ -162,7 +162,7 @@
             <div class="panel card p-command" data-splitkey="command">
                 <div class="panel-head">
                     <div class="panel-title">Command preview</div>
-                    <div style="display:flex; gap:6px;">
+                    <div class="head-buttons">
                         <button class="btn" @onclick="() => Run(Vm.OpenScriptCommand)">📂 Open…</button>
                         <button class="btn" @onclick="() => Run(Vm.SaveScriptCommand)">💾 Save…</button>
                     </div>

@@ -223,6 +223,11 @@ body {
     margin-bottom: 6px;
 }
 
+.head-buttons {
+    display: flex;
+    gap: 6px;
+}
+
 .list {
     flex: 1 1 auto;
     overflow-y: auto;

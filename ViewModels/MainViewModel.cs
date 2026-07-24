@@ -37,16 +37,10 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<PartitionInfo> Partitions { get; } = new();
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsNotBusy))]
     public partial bool IsBusy { get; set; }
 
-    public bool IsNotBusy => !IsBusy;
-
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsNotElevated))]
     public partial bool IsElevated { get; set; }
-
-    public bool IsNotElevated => !IsElevated;
 
     [ObservableProperty]
     public partial string StatusText { get; set; }
@@ -111,7 +105,7 @@ public partial class MainViewModel : ObservableObject
     {
         return WithSelectedDisk(async disk =>
         {
-            var result = await _diskpart.RunCommandsAsync(default, $"select disk {disk.Number}", "detail disk");
+            var result = await _diskpart.RunCommandsAsync($"select disk {disk.Number}", "detail disk");
             ShowResult(result);
         });
     }
@@ -121,7 +115,7 @@ public partial class MainViewModel : ObservableObject
     {
         return WithSelectedDisk(async disk =>
         {
-            var result = await _diskpart.RunCommandsAsync(default, $"select disk {disk.Number}", "list partition");
+            var result = await _diskpart.RunCommandsAsync($"select disk {disk.Number}", "list partition");
             ReplacePartitions(result.Output);
             ShowResult(result);
         });
@@ -132,7 +126,7 @@ public partial class MainViewModel : ObservableObject
     {
         return WithSelectedVolume(async volume =>
         {
-            var result = await _diskpart.RunCommandsAsync(default, $"select volume {volume.Number}", "detail volume");
+            var result = await _diskpart.RunCommandsAsync($"select volume {volume.Number}", "detail volume");
             ShowResult(result);
         });
     }
@@ -585,7 +579,7 @@ Continue building the script?",
 
     private async Task LoadPartitionsCoreAsync(DiskInfo disk)
     {
-        var result = await _diskpart.RunCommandsAsync(default, $"select disk {disk.Number}", "list partition");
+        var result = await _diskpart.RunCommandsAsync($"select disk {disk.Number}", "list partition");
         ReplacePartitions(result.Output);
     }
 

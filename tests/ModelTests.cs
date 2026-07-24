@@ -42,6 +42,40 @@ public class ModelTests
     }
 
     [Fact]
+    public void DiskInfo_Summary_appends_dynamic_when_flagged()
+    {
+        var disk = new DiskInfo
+        {
+            Number = 2,
+            Status = "Online",
+            Size = "931 GB",
+            Free = "0 B",
+            IsDynamic = true,
+        };
+
+        Assert.Equal("Online  •  931 GB  •  MBR  •  Dynamic", disk.Summary);
+    }
+
+    [Fact]
+    public void VolumeInfo_Summary_is_empty_when_no_fields_are_set()
+    {
+        Assert.Equal(string.Empty, new VolumeInfo { Number = 3 }.Summary);
+    }
+
+    [Fact]
+    public void PartitionInfo_Summary_omits_a_missing_offset()
+    {
+        var partition = new PartitionInfo
+        {
+            Number = 1,
+            Type = "Primary",
+            Size = "475 GB",
+        };
+
+        Assert.Equal("Primary  •  475 GB", partition.Summary);
+    }
+
+    [Fact]
     public void VolumeInfo_Caption_includes_the_drive_letter_when_present()
     {
         var volume = new VolumeInfo { Number = 0, Letter = "C" };

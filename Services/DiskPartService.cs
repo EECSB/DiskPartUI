@@ -55,7 +55,7 @@ public sealed class DiskPartService
                 builder.Append(result.StandardError.TrimEnd());
             }
 
-            return new DiskPartResult(result.ExitCode == 0, builder.ToString(), normalized.Trim());
+            return new DiskPartResult(result.ExitCode == 0, builder.ToString());
         }
         finally
         {
@@ -71,9 +71,9 @@ public sealed class DiskPartService
     }
 
     ///<summary>Convenience overload for running one or more commands.</summary>
-    public Task<DiskPartResult> RunCommandsAsync(CancellationToken cancellationToken, params string[] commands)
+    public Task<DiskPartResult> RunCommandsAsync(params string[] commands)
     {
-        return RunScriptAsync(string.Join(Environment.NewLine, commands), cancellationToken);
+        return RunScriptAsync(string.Join(Environment.NewLine, commands));
     }
 
     private static string NormalizeScript(string script)

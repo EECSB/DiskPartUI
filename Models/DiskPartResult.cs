@@ -1,7 +1,7 @@
 namespace DiskPartUI.Models;
 
 ///<summary>
-///The outcome of running a diskpart script: whether it exited cleanly, the
-///combined console output, and the exact script that was sent.
+///The outcome of running a diskpart script: whether it exited cleanly and the
+///combined console output.
 ///</summary>
-public sealed record DiskPartResult(bool Success, string Output, string Script);
+public sealed record DiskPartResult(bool Success, string Output);
