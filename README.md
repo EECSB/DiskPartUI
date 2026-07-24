@@ -4,7 +4,7 @@
 
 [![Latest release](https://img.shields.io/github/v/release/EECSB/DiskPartUI?label=download)](https://github.com/EECSB/DiskPartUI/releases/latest) ![Windows only](https://img.shields.io/badge/platform-Windows-blue) ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4) ![MAUI](https://img.shields.io/badge/UI-.NET%20MAUI-512BD4)
 
-![DiskPart UI — disks, partitions and volumes on the left; actions, command preview and output on the right](https://eecs.blog/wp-content/uploads/2026/07/DiskPartUI-1024x801.png)
+![DiskPart UI — disks, partitions and volumes on the left; actions, command preview and output on the right](https://eecs.blog/wp-content/uploads/2026/07/DiskPartUI.png)
 
 ## About
 
