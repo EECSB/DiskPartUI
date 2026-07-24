@@ -226,7 +226,7 @@ DiskPartUI/
                                 #   FileDialogService, ElevationHelper
   ViewModels/MainViewModel.cs   # app logic and commands (CommunityToolkit.Mvvm)
   Platforms/Windows/            # app.manifest (requireAdministrator), Package.appxmanifest
-  Resources/                    # fonts, icons, splash
+  Resources/                    # app icon and splash screen
   installer/                    # Inno Setup script + installer smoke test
   tests/                        # xUnit tests (net10.0), linking the pure-logic sources
 DOCUMENTATION.md                # developer documentation
